@@ -21,35 +21,35 @@ const BookTransport = () => {
   const [randomVehicles] = useState([
     {
       id: 1,
-      driver: 'James Kiprotich',
+      driver: 'Jean Baptiste Uwimana',
       vehicle: 'Toyota Hilux',
       capacity: '2 tons',
-      price: 'KSh 3,500',
+      price: 'RWF 85,000',
       rating: 4.8,
       eta: '2 hours',
-      phone: '+254 712 345 678',
+      phone: '+250 788 123 456',
       avatar: '👨‍🚀',
     },
     {
       id: 2,
-      driver: 'Mary Wanjiku',
+      driver: 'Marie Claire Mukamana',
       vehicle: 'Isuzu Truck',
       capacity: '5 tons',
-      price: 'KSh 7,200',
+      price: 'RWF 180,000',
       rating: 4.9,
       eta: '3 hours',
-      phone: '+254 721 876 543',
+      phone: '+250 789 654 321',
       avatar: '👩‍💼',
     },
     {
       id: 3,
-      driver: 'Peter Muthee',
+      driver: 'Paul Kagabo',
       vehicle: 'Mahindra Pickup',
       capacity: '1.5 tons',
-      price: 'KSh 2,800',
+      price: 'RWF 65,000',
       rating: 4.7,
       eta: '1.5 hours',
-      phone: '+254 733 654 321',
+      phone: '+250 790 987 654',
       avatar: '👨‍🌾',
     },
   ]);
@@ -57,35 +57,35 @@ const BookTransport = () => {
   const [searchResults, setSearchResults] = useState([
     {
       id: 4,
-      driver: 'Sarah Njeri',
+      driver: 'Alice Uwimana',
       vehicle: 'Nissan NV200',
       capacity: '1 ton',
-      price: 'KSh 2,200',
+      price: 'RWF 55,000',
       rating: 4.6,
       eta: '1 hour',
-      phone: '+254 745 123 987',
+      phone: '+250 785 123 987',
       avatar: '👩‍💼',
     },
     {
       id: 5,
-      driver: 'David Kimani',
+      driver: 'David Nkuranga',
       vehicle: 'Mitsubishi Canter',
       capacity: '3 tons',
-      price: 'KSh 4,800',
+      price: 'RWF 120,000',
       rating: 4.8,
       eta: '2.5 hours',
-      phone: '+254 756 432 109',
+      phone: '+250 786 432 109',
       avatar: '👨‍🔧',
     },
     {
       id: 6,
-      driver: 'Grace Akinyi',
+      driver: 'Grace Uwase',
       vehicle: 'Ford Ranger',
       capacity: '1.8 tons',
-      price: 'KSh 3,200',
+      price: 'RWF 75,000',
       rating: 4.9,
       eta: '1.8 hours',
-      phone: '+254 767 890 543',
+      phone: '+250 787 890 543',
       avatar: '👩‍🌾',
     },
   ]);
@@ -198,7 +198,7 @@ const BookTransport = () => {
                   </Label>
                   <Input
                     id="pickup"
-                    placeholder="Enter your farm location"
+                    placeholder="e.g. Musanze, Northern Province"
                     value={formData.pickup}
                     onChange={(e) => handleInputChange('pickup', e.target.value)}
                     className="input-field"
@@ -212,7 +212,7 @@ const BookTransport = () => {
                   </Label>
                   <Input
                     id="delivery"
-                    placeholder="Enter market destination"
+                    placeholder="e.g. Kimisagara Market, Kigali"
                     value={formData.delivery}
                     onChange={(e) => handleInputChange('delivery', e.target.value)}
                     className="input-field"
