@@ -18,7 +18,7 @@ const BookTransport = () => {
     loadSize: '',
   });
 
-  const [searchResults, setSearchResults] = useState([
+  const [randomVehicles] = useState([
     {
       id: 1,
       driver: 'James Kiprotich',
@@ -51,6 +51,42 @@ const BookTransport = () => {
       eta: '1.5 hours',
       phone: '+254 733 654 321',
       avatar: '👨‍🌾',
+    },
+  ]);
+
+  const [searchResults, setSearchResults] = useState([
+    {
+      id: 4,
+      driver: 'Sarah Njeri',
+      vehicle: 'Nissan NV200',
+      capacity: '1 ton',
+      price: 'KSh 2,200',
+      rating: 4.6,
+      eta: '1 hour',
+      phone: '+254 745 123 987',
+      avatar: '👩‍💼',
+    },
+    {
+      id: 5,
+      driver: 'David Kimani',
+      vehicle: 'Mitsubishi Canter',
+      capacity: '3 tons',
+      price: 'KSh 4,800',
+      rating: 4.8,
+      eta: '2.5 hours',
+      phone: '+254 756 432 109',
+      avatar: '👨‍🔧',
+    },
+    {
+      id: 6,
+      driver: 'Grace Akinyi',
+      vehicle: 'Ford Ranger',
+      capacity: '1.8 tons',
+      price: 'KSh 3,200',
+      rating: 4.9,
+      eta: '1.8 hours',
+      phone: '+254 767 890 543',
+      avatar: '👩‍🌾',
     },
   ]);
 
@@ -91,6 +127,57 @@ const BookTransport = () => {
           <p className="text-xl text-muted-foreground">
             Find reliable vehicles to transport your goods to market
           </p>
+        </div>
+
+        {/* Random Available Vehicles Row */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Available Now</h2>
+            <p className="text-muted-foreground">Quick book these vehicles</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {randomVehicles.map((vehicle) => (
+              <Card key={vehicle.id} className="card-elevated hover:scale-102 transition-transform">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">{vehicle.avatar}</div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{vehicle.driver}</h3>
+                        <p className="text-sm text-muted-foreground">{vehicle.vehicle}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">{vehicle.price}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-4">
+                    <div className="flex items-center">
+                      <Package className="h-3 w-3 mr-1" />
+                      {vehicle.capacity}
+                    </div>
+                    <div className="flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {vehicle.eta}
+                    </div>
+                    <div className="flex items-center">
+                      <Star className="h-3 w-3 mr-1 text-yellow-400 fill-current" />
+                      {vehicle.rating}
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={() => handleBooking(vehicle)}
+                    className="w-full btn-hero"
+                    size="sm"
+                  >
+                    Quick Book
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
