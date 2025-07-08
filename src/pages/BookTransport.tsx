@@ -92,7 +92,7 @@ const BookTransport = () => {
 
   const [showResults, setShowResults] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -112,7 +112,7 @@ const BookTransport = () => {
     });
   };
 
-  const handleBooking = (driver: any) => {
+  const handleBooking = (driver) => {
     toast({
       title: "Booking Confirmed!",
       description: `Your transport has been booked with ${driver.driver}. You will receive a confirmation SMS.`,
