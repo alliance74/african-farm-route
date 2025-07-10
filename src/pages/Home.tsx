@@ -74,13 +74,13 @@ const Home = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/book">
+            <Link to="/login">
               <Button className="btn-hero">
                 <Truck className="h-5 w-5 mr-2" />
                 Book a Vehicle
               </Button>
             </Link>
-            <Link to="/register-vehicle">
+            <Link to="/login">
               <Button className="bg-background/20 backdrop-blur-sm text-background border-2 border-background/30 hover:bg-background/30 px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300">
                 Register as Driver
               </Button>

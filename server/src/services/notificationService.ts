@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import { config } from '../config/config';
 
 export class NotificationService {
-  private static emailTransporter = nodemailer.createTransporter({
+  private static emailTransporter = nodemailer.createTransport({
     host: config.email.host,
     port: config.email.port,
     secure: false,

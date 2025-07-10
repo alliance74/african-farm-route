@@ -104,4 +104,7 @@ router.put(
   ChatController.closeChatRoom
 );
 
+// Add delete chat room endpoint
+router.delete('/rooms/:id', authenticateToken, ChatController.deleteChatRoom);
+
 export default router;

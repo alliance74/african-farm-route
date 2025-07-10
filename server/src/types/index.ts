@@ -34,6 +34,15 @@ export interface Vehicle {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // New fields for future use
+  full_name?: string;
+  phone_number?: string;
+  email?: string;
+  license_number?: string;
+  experience?: string;
+  service_areas?: string;
+  availability?: string;
+  additional_info?: string;
 }
 
 export interface Booking {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Phone, Mail, Lock, User, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 const Login = () => {
   const { toast } = useToast();
+  const { login } = useAuth();
+  const navigate = useNavigate();
   const [loginData, setLoginData] = useState({
     phone: '',
     password: '',
@@ -23,7 +26,7 @@ const Login = () => {
     userType: 'farmer',
   });
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginData.phone || !loginData.password) {
       toast({
@@ -33,25 +36,51 @@ const Login = () => {
       });
       return;
     }
-    
-    toast({
-      title: "Login Successful!",
-      description: "Welcome back to AgriMove",
-    });
-    // Handle login logic here
+    try {
+      const response = await fetch('/api/v1/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: loginData.phone,
+          password: loginData.password
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast({
+          title: "Login Failed",
+          description: data.message || "Invalid credentials",
+          variant: "destructive"
+        });
+        return;
+      }
+      // Store token and user info
+      localStorage.setItem('token', data.data.token);
+      login(data.data.user);
+      toast({
+        title: "Login Successful!",
+        description: "Welcome back to AgriMove",
+      });
+      navigate('/'); // Redirect to homepage after login
+    } catch (error) {
+      toast({
+        title: "Login Error",
+        description: (error as Error).message || "An error occurred during login",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupData.fullName || !signupData.phone || !signupData.password) {
+    if (!signupData.fullName || !signupData.phone || !signupData.password || !signupData.confirmPassword || !signupData.userType) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all fields",
         variant: "destructive"
       });
       return;
     }
-    
     if (signupData.password !== signupData.confirmPassword) {
       toast({
         title: "Password Mismatch",
@@ -60,12 +89,42 @@ const Login = () => {
       });
       return;
     }
-
-    toast({
-      title: "Account Created!",
-      description: "Your account has been created successfully. You can now login.",
-    });
-    // Handle signup logic here
+    try {
+      const response = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: signupData.fullName,
+          phone: signupData.phone,
+          email: signupData.email,
+          password: signupData.password,
+          user_type: signupData.userType
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast({
+          title: "Registration Failed",
+          description: data.message || "Could not create account",
+          variant: "destructive"
+        });
+        return;
+      }
+      // Store token and user info
+      localStorage.setItem('token', data.data.token);
+      login(data.data.user);
+      toast({
+        title: "Registration Successful!",
+        description: "Welcome to AgriMove",
+      });
+      // Optionally, redirect or update app state here
+    } catch (error) {
+      toast({
+        title: "Registration Error",
+        description: (error as Error).message || "An error occurred during registration",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -159,7 +218,7 @@ const Login = () => {
                 <CardTitle className="text-center">Create Account</CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSignup} className="space-y-6">
+                <form onSubmit={handleRegister} className="space-y-6">
                   <div>
                     <Label htmlFor="userType" className="mb-2 block">I am a</Label>
                     <div className="grid grid-cols-2 gap-4">

@@ -1,19 +1,33 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Truck, User, LogIn, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const currentUser = useCurrentUser();
 
-  const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Book Transport', href: '/book' },
-    { name: 'Register Vehicle', href: '/register-vehicle' },
-    { name: 'My Bookings', href: '/bookings' },
-    { name: 'Messages', href: '/chat' },
-  ];
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // Helper to get initials
+  const getInitials = (user) => {
+    if (!user) return '';
+    if (user.full_name) {
+      return user.full_name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    if (user.phone) {
+      return user.phone.slice(-2);
+    }
+    return '';
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -30,40 +44,108 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            {navigation.map((item) => (
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/about"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/about') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+            >
+              About Us
+            </Link>
+            {!user && (
+              <>
+                <Link
+                  to="/login"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/book') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                >
+                  Book Transport
+                </Link>
+                <Link
+                  to="/login"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/register-vehicle') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                >
+                  Register Vehicle
+                </Link>
+              </>
+            )}
+            {user?.user_type === 'farmer' && (
               <Link
-                key={item.name}
-                to={item.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? 'text-primary bg-accent'
-                    : 'text-foreground hover:text-primary hover:bg-accent'
-                }`}
+                to="/book"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/book') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
               >
-                {item.name}
+                Book Transport
               </Link>
-            ))}
-            
-            <div className="flex items-center space-x-4">
-              <Link to="/admin">
-                <Button variant="ghost" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Admin
-                </Button>
+            )}
+            {user?.user_type === 'driver' && (
+              <Link
+                to="/register-vehicle"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/register-vehicle') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              >
+                Register Vehicle
               </Link>
-              <Link to="/chat">
-                <Button variant="ghost" size="sm">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Chat
-                </Button>
+            )}
+            {user && (
+              <Link
+                to="/chat"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/chat') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              >
+                Chat
               </Link>
+            )}
+            {user && user.user_type === 'farmer' && (
+              <Link
+                to="/farmer-dashboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/farmer-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              >
+                Dashboard
+              </Link>
+            )}
+            {user && user.user_type === 'driver' && (
+              <Link
+                to="/driver-dashboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/driver-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              >
+                Dashboard
+              </Link>
+            )}
+            {user?.user_type === 'admin' && (
+              <Link
+                to="/admin-dashboard"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/admin-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              >
+                Admin Dashboard
+              </Link>
+            )}
+            {!user && (
               <Link to="/login">
                 <Button className="btn-secondary">
                   <LogIn className="h-4 w-4 mr-2" />
                   Login
                 </Button>
               </Link>
-            </div>
+            )}
+            {user && (
+              <>
+                <Link to="/profile" style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: '#ccc',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    marginRight: 8
+                  }}>{getInitials(user)}</span>
+                </Link>
+                <Button variant="ghost" onClick={handleLogout}>Logout</Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -82,40 +164,118 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-background border-t border-border">
-            {navigation.map((item) => (
+            <Link
+              to="/"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              onClick={() => setIsOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              to="/about"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/about') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+              onClick={() => setIsOpen(false)}
+            >
+              About Us
+            </Link>
+            {!user && (
+              <>
+                <Link
+                  to="/login"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/book') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Book Transport
+                </Link>
+                <Link
+                  to="/login"
+                  className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/register-vehicle') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Register Vehicle
+                </Link>
+              </>
+            )}
+            {user?.user_type === 'farmer' && (
               <Link
-                key={item.name}
-                to={item.href}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  isActive(item.href)
-                    ? 'text-primary bg-accent'
-                    : 'text-foreground hover:text-primary hover:bg-accent'
-                }`}
+                to="/book"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/book') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
                 onClick={() => setIsOpen(false)}
               >
-                {item.name}
+                Book Transport
               </Link>
-            ))}
-            <div className="pt-4 space-y-2">
-              <Link to="/admin" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="h-4 w-4 mr-2" />
-                  Admin
-                </Button>
+            )}
+            {user?.user_type === 'driver' && (
+              <Link
+                to="/register-vehicle"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/register-vehicle') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Register Vehicle
               </Link>
-              <Link to="/chat" onClick={() => setIsOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Chat
-                </Button>
+            )}
+            {user && (
+              <Link
+                to="/chat"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/chat') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Chat
               </Link>
+            )}
+            {user && user.user_type === 'farmer' && (
+              <Link
+                to="/farmer-dashboard"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/farmer-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
+            {user && user.user_type === 'driver' && (
+              <Link
+                to="/driver-dashboard"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/driver-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
+            {user?.user_type === 'admin' && (
+              <Link
+                to="/admin-dashboard"
+                className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/admin-dashboard') ? 'text-primary bg-accent' : 'text-foreground hover:text-primary hover:bg-accent'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Admin Dashboard
+              </Link>
+            )}
+            {!user && (
               <Link to="/login" onClick={() => setIsOpen(false)}>
                 <Button className="btn-secondary w-full">
                   <LogIn className="h-4 w-4 mr-2" />
                   Login
                 </Button>
               </Link>
-            </div>
+            )}
+            {user && (
+              <div className="flex items-center space-x-2 mt-2">
+                <Link to="/profile" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: '#ccc',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    marginRight: 8
+                  }}>{getInitials(user)}</span>
+                </Link>
+                <Button variant="ghost" onClick={handleLogout}>Logout</Button>
+              </div>
+            )}
           </div>
         </div>
       )}

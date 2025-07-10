@@ -2,12 +2,13 @@ import { Request, Response } from 'express';
 import { ChatService } from '../services/chatService';
 import { ApiResponse } from '../types';
 import { AuthRequest } from '../middleware/auth';
+import { BookingService } from '../services/bookingService';
 
 export class ChatController {
   static async createOrGetChatRoom(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user!.id;
-      const { other_user_id, booking_id } = req.body;
+      let { other_user_id, booking_id } = req.body;
 
       // Determine farmer and driver IDs based on user types
       let farmerId: string, driverId: string;
@@ -25,6 +26,19 @@ export class ChatController {
         };
         res.status(403).json(response);
         return;
+      }
+
+      // If no booking_id, create a new booking with minimal placeholder data
+      if (!booking_id) {
+        const booking = await BookingService.createBooking(farmerId, {
+          pickup_location: 'TBD',
+          delivery_location: 'TBD',
+          goods_type: 'TBD',
+          goods_weight: 1,
+          scheduled_date: new Date().toISOString().slice(0, 10),
+          scheduled_time: '09:00',
+        });
+        booking_id = booking.id;
       }
 
       const room = await ChatService.createOrGetChatRoom(farmerId, driverId, booking_id);
@@ -207,6 +221,26 @@ export class ChatController {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
 
+      res.status(400).json(response);
+    }
+  }
+
+  static async deleteChatRoom(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const roomId = req.params.id;
+      await ChatService.deleteChatRoom(roomId, userId);
+      const response: ApiResponse = {
+        success: true,
+        message: 'Chat room deleted successfully'
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      const response: ApiResponse = {
+        success: false,
+        message: 'Failed to delete chat room',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
       res.status(400).json(response);
     }
   }

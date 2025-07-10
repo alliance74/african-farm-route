@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Calendar, Package, Truck, Filter, Star, Clock, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useNavigate } from 'react-router-dom';
 
 const BookTransport = () => {
+  const user = useCurrentUser();
+  if (!user || user.user_type !== "farmer") {
+    return <div>Access denied</div>;
+  }
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     pickup: '',
@@ -18,79 +24,21 @@ const BookTransport = () => {
     loadSize: '',
   });
 
-  const [randomVehicles] = useState([
-    {
-      id: 1,
-      driver: 'Jean Baptiste Uwimana',
-      vehicle: 'Toyota Hilux',
-      capacity: '2 tons',
-      price: 'RWF 85,000',
-      rating: 4.8,
-      eta: '2 hours',
-      phone: '+250 788 123 456',
-      avatar: '👨‍🚀',
-    },
-    {
-      id: 2,
-      driver: 'Marie Claire Mukamana',
-      vehicle: 'Isuzu Truck',
-      capacity: '5 tons',
-      price: 'RWF 180,000',
-      rating: 4.9,
-      eta: '3 hours',
-      phone: '+250 789 654 321',
-      avatar: '👩‍💼',
-    },
-    {
-      id: 3,
-      driver: 'Paul Kagabo',
-      vehicle: 'Mahindra Pickup',
-      capacity: '1.5 tons',
-      price: 'RWF 65,000',
-      rating: 4.7,
-      eta: '1.5 hours',
-      phone: '+250 790 987 654',
-      avatar: '👨‍🌾',
-    },
-  ]);
-
-  const [searchResults, setSearchResults] = useState([
-    {
-      id: 4,
-      driver: 'Alice Uwimana',
-      vehicle: 'Nissan NV200',
-      capacity: '1 ton',
-      price: 'RWF 55,000',
-      rating: 4.6,
-      eta: '1 hour',
-      phone: '+250 785 123 987',
-      avatar: '👩‍💼',
-    },
-    {
-      id: 5,
-      driver: 'David Nkuranga',
-      vehicle: 'Mitsubishi Canter',
-      capacity: '3 tons',
-      price: 'RWF 120,000',
-      rating: 4.8,
-      eta: '2.5 hours',
-      phone: '+250 786 432 109',
-      avatar: '👨‍🔧',
-    },
-    {
-      id: 6,
-      driver: 'Grace Uwase',
-      vehicle: 'Ford Ranger',
-      capacity: '1.8 tons',
-      price: 'RWF 75,000',
-      rating: 4.9,
-      eta: '1.8 hours',
-      phone: '+250 787 890 543',
-      avatar: '👩‍🌾',
-    },
-  ]);
-
+  const [availableVehicles, setAvailableVehicles] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/v1/vehicles/available')
+      .then(res => res.json())
+      .then(data => {
+        setAvailableVehicles(data.data || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -108,15 +56,63 @@ const BookTransport = () => {
     setShowResults(true);
     toast({
       title: "Search Complete",
-      description: `Found ${searchResults.length} available vehicles`,
+      description: `Found ${availableVehicles.length} available vehicles`,
     });
   };
 
-  const handleBooking = (driver) => {
+  const handleBooking = (vehicle) => {
     toast({
       title: "Booking Confirmed!",
-      description: `Your transport has been booked with ${driver.driver}. You will receive a confirmation SMS.`,
+      description: `Your transport has been booked with ${vehicle.driver?.full_name || vehicle.full_name || 'the driver'}. You will receive a confirmation SMS.`,
     });
+  };
+
+  const handleNegotiate = async (vehicle) => {
+    console.log('vehicle:', vehicle);
+    console.log('vehicle.driver:', vehicle.driver);
+    console.log('driver id:', vehicle.driver?.id || vehicle.driver_id);
+    // Prepare booking draft
+    const bookingDraft = {
+      pickup: formData.pickup,
+      delivery: formData.delivery,
+      goodsType: formData.goodsType,
+      date: formData.date,
+      time: formData.time,
+      loadSize: formData.loadSize,
+      vehicle_id: vehicle.id,
+      driver_id: vehicle.driver?.id || vehicle.driver_id,
+    };
+    // Navigate to chat page, passing driver id and booking draft as state
+    navigate('/chat', { state: { otherUserId: vehicle.driver?.id || vehicle.driver_id, bookingDraft } });
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!selectedVehicle) return;
+    const bookingData = {
+      pickup: formData.pickup,
+      delivery: formData.delivery,
+      goodsType: formData.goodsType,
+      date: formData.date,
+      time: formData.time,
+      loadSize: formData.loadSize,
+      vehicle_id: selectedVehicle.id,
+      driver_id: selectedVehicle.driver?.id || selectedVehicle.driver_id,
+    };
+    try {
+      const res = await fetch('/api/v1/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(bookingData)
+      });
+      if (!res.ok) throw new Error('Failed to create booking');
+      toast({ title: 'Booking Confirmed!', description: 'Your booking has been created.' });
+      // setChatOpen(false); // This line is removed as per the edit hint
+    } catch (e) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
   };
 
   return (
@@ -129,55 +125,60 @@ const BookTransport = () => {
           </p>
         </div>
 
-        {/* Random Available Vehicles Row */}
+        {/* Available Vehicles Row */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-foreground">Available Now</h2>
             <p className="text-muted-foreground">Quick book these vehicles</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {randomVehicles.map((vehicle) => (
-              <Card key={vehicle.id} className="card-elevated hover:scale-102 transition-transform">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="text-2xl">{vehicle.avatar}</div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{vehicle.driver}</h3>
-                        <p className="text-sm text-muted-foreground">{vehicle.vehicle}</p>
+          {loading ? (
+            <div>Loading vehicles...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {availableVehicles.map((vehicle) => (
+                <Card key={vehicle.id} className="card-elevated hover:scale-102 transition-transform">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">🚚</div>
+                        <div>
+                          <h3 className="font-semibold text-foreground">{vehicle.driver?.full_name || vehicle.full_name || 'Driver'}</h3>
+                          <p className="text-sm text-muted-foreground">{vehicle.make} {vehicle.model}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-primary">RWF {vehicle.rate_per_km}/km</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-primary">{vehicle.price}</div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-4">
+                      <div className="flex items-center">
+                        <Package className="h-3 w-3 mr-1" />
+                        {vehicle.capacity} tons
+                      </div>
+                      <div className="flex items-center">
+                        <Star className="h-3 w-3 mr-1 text-yellow-400 fill-current" />
+                        {vehicle.driver?.rating || 'N/A'}
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-4">
-                    <div className="flex items-center">
-                      <Package className="h-3 w-3 mr-1" />
-                      {vehicle.capacity}
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {vehicle.eta}
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="h-3 w-3 mr-1 text-yellow-400 fill-current" />
-                      {vehicle.rating}
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => handleBooking(vehicle)}
-                    className="w-full btn-hero"
-                    size="sm"
-                  >
-                    Quick Book
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <Button 
+                      onClick={() => handleBooking(vehicle)}
+                      className="w-full btn-hero mb-2"
+                      size="sm"
+                    >
+                      Quick Book
+                    </Button>
+                    <Button
+                      onClick={() => handleNegotiate(vehicle)}
+                      className="w-full btn-outline"
+                      size="sm"
+                    >
+                      Negotiate & Book
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -301,24 +302,24 @@ const BookTransport = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {searchResults.map((result) => (
-                    <Card key={result.id} className="card-elevated hover:scale-102 transition-transform">
+                  {availableVehicles.map((vehicle) => (
+                    <Card key={vehicle.id} className="card-elevated hover:scale-102 transition-transform">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className="text-4xl">{result.avatar}</div>
+                            <div className="text-4xl">🚚</div>
                             <div>
-                              <h3 className="text-lg font-semibold text-foreground">{result.driver}</h3>
-                              <p className="text-muted-foreground">{result.vehicle}</p>
+                              <h3 className="text-lg font-semibold text-foreground">{vehicle.driver?.full_name || vehicle.full_name || 'Driver'}</h3>
+                              <p className="text-muted-foreground">{vehicle.make} {vehicle.model}</p>
                               <div className="flex items-center mt-1">
                                 <Star className="h-4 w-4 text-yellow-400 fill-current mr-1" />
-                                <span className="text-sm text-muted-foreground">{result.rating} rating</span>
+                                <span className="text-sm text-muted-foreground">{vehicle.driver?.rating || 'N/A'} rating</span>
                               </div>
                             </div>
                           </div>
                           
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-primary">{result.price}</div>
+                            <div className="text-2xl font-bold text-primary">RWF {vehicle.rate_per_km}/km</div>
                             <div className="text-sm text-muted-foreground">per trip</div>
                           </div>
                         </div>
@@ -326,17 +327,17 @@ const BookTransport = () => {
                         <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-border">
                           <div className="text-center">
                             <Package className="h-5 w-5 text-primary mx-auto mb-1" />
-                            <div className="text-sm font-medium">{result.capacity}</div>
+                            <div className="text-sm font-medium">{vehicle.capacity} tons</div>
                             <div className="text-xs text-muted-foreground">Capacity</div>
                           </div>
                           <div className="text-center">
-                            <Clock className="h-5 w-5 text-primary mx-auto mb-1" />
-                            <div className="text-sm font-medium">{result.eta}</div>
-                            <div className="text-xs text-muted-foreground">ETA</div>
+                            <Star className="h-5 w-5 text-primary mx-auto mb-1" />
+                            <div className="text-sm font-medium">{vehicle.driver?.rating || 'N/A'} rating</div>
+                            <div className="text-xs text-muted-foreground">Rating</div>
                           </div>
                           <div className="text-center">
                             <Button 
-                              onClick={() => handleBooking(result)}
+                              onClick={() => handleBooking(vehicle)}
                               className="btn-hero"
                               size="sm"
                             >
@@ -365,6 +366,7 @@ const BookTransport = () => {
           </div>
         </div>
       </div>
+      {/* REMOVE chat modal/Dialog logic */}
     </div>
   );
 };

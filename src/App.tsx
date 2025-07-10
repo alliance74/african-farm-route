@@ -13,6 +13,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import { AuthProvider } from "@/context/AuthContext";
+import FarmerDashboard from './pages/FarmerDashboard';
+import DriverDashboard from './pages/DriverDashboard';
 
 const queryClient = new QueryClient();
 
@@ -21,25 +24,29 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/book" element={<BookTransport />} />
-              <Route path="/register-vehicle" element={<RegisterVehicle />} />
-              <Route path="/bookings" element={<MyBookings />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/chat" element={<Chat />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/book" element={<BookTransport />} />
+                <Route path="/register-vehicle" element={<RegisterVehicle />} />
+                <Route path="/bookings" element={<MyBookings />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+                <Route path="/driver-dashboard" element={<DriverDashboard />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

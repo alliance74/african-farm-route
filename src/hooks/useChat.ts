@@ -18,6 +18,9 @@ export const useChat = ({ token, userId }: UseChatProps) => {
   const [typingUser, setTypingUser] = useState<string>('');
   const { toast } = useToast();
 
+  // Helper to get token
+  const getToken = () => localStorage.getItem('token');
+
   // Initialize socket connection
   useEffect(() => {
     if (!token) return;
@@ -88,7 +91,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
     try {
       const response = await fetch('/api/v1/chat/rooms', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${getToken()}`
         }
       });
 
@@ -99,7 +102,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
     } catch (error) {
       console.error('Failed to fetch chat rooms:', error);
     }
-  }, [token]);
+  }, []);
 
   // Create or get chat room
   const createOrGetRoom = useCallback(async (otherUserId: string, bookingId?: string) => {
@@ -108,7 +111,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${getToken()}`
         },
         body: JSON.stringify({
           other_user_id: otherUserId,
@@ -138,7 +141,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
       });
     }
     return null;
-  }, [token, toast]);
+  }, [toast]);
 
   // Join room
   const joinRoom = useCallback(async (room: ChatRoom) => {
@@ -157,7 +160,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
     try {
       const response = await fetch(`/api/v1/chat/rooms/${room.id}/messages`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${getToken()}`
         }
       });
 
@@ -175,7 +178,7 @@ export const useChat = ({ token, userId }: UseChatProps) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${getToken()}`
         }
       });
     } catch (error) {

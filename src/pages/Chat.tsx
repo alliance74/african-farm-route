@@ -6,6 +6,9 @@ import { ChatList } from '@/components/Chat/ChatList';
 import { ChatWindow } from '@/components/Chat/ChatWindow';
 import { useChat } from '@/hooks/useChat';
 import { ChatRoom } from '@/types/chat';
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useLocation } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock user data - replace with actual auth context
 const mockUser = {
@@ -15,8 +18,15 @@ const mockUser = {
 };
 
 const Chat = () => {
+  const user = useCurrentUser();
+  const location = useLocation();
+  const { toast } = useToast();
+  if (!user) {
+    return <div>Access denied</div>;
+  }
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
+  const [bookingDraft, setBookingDraft] = useState(null);
 
   const {
     connected,
@@ -33,9 +43,32 @@ const Chat = () => {
     startTyping,
     stopTyping
   } = useChat({
-    token: mockUser.token,
-    userId: mockUser.id
+    token: localStorage.getItem('token'),
+    userId: user.id
   });
+
+  // Auto-open chat if navigated from BookTransport
+  useEffect(() => {
+    if (
+      connected &&
+      !selectedRoom &&
+      location.state && location.state.otherUserId
+    ) {
+      const { otherUserId, bookingDraft } = location.state;
+      if (bookingDraft) setBookingDraft(bookingDraft);
+      (async () => {
+        const room = await createOrGetRoom(otherUserId);
+        if (room) {
+          // Ensure the room is in the rooms list
+          if (!rooms.find(r => r.id === room.id)) {
+            rooms.unshift(room);
+          }
+          setSelectedRoom(room);
+          joinRoom(room);
+        }
+      })();
+    }
+  }, [connected, selectedRoom, location.state, createOrGetRoom, joinRoom, rooms]);
 
   useEffect(() => {
     if (connected) {
@@ -63,6 +96,26 @@ const Chat = () => {
       handleRoomSelect(room);
     }
     setShowNewChatDialog(false);
+  };
+
+  const handleDeleteRoom = async (room: ChatRoom) => {
+    if (!window.confirm('Are you sure you want to delete this chat? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/v1/chat/rooms/${room.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to delete chat room');
+      toast({ title: 'Chat deleted', description: 'The chat has been deleted.' });
+      if (selectedRoom?.id === room.id) {
+        setSelectedRoom(null);
+      }
+      fetchRooms();
+    } catch (e) {
+      toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    }
   };
 
   return (
@@ -100,24 +153,50 @@ const Chat = () => {
           <div className="lg:col-span-1">
             <ChatList
               rooms={rooms}
-              currentUserId={mockUser.id}
+              currentUserId={user.id}
               onRoomSelect={handleRoomSelect}
               selectedRoomId={selectedRoom?.id}
+              onDeleteRoom={handleDeleteRoom}
             />
           </div>
 
           {/* Chat Window */}
           <div className="lg:col-span-2">
             {selectedRoom ? (
-              <ChatWindow
-                room={selectedRoom}
-                messages={messages}
-                currentUserId={mockUser.id}
-                onSendMessage={handleSendMessage}
-                onClose={handleCloseChat}
-                isTyping={isTyping}
-                typingUser={typingUser}
-              />
+              <div>
+                <ChatWindow
+                  room={selectedRoom}
+                  messages={messages}
+                  currentUserId={user.id}
+                  onSendMessage={handleSendMessage}
+                  onClose={handleCloseChat}
+                  isTyping={isTyping}
+                  typingUser={typingUser}
+                />
+                {/* Show Confirm Booking if bookingDraft is present and user is farmer */}
+                {bookingDraft && user.user_type === 'farmer' && (
+                  <div className="mt-4 text-center">
+                    <Button className="btn-hero" onClick={async () => {
+                      try {
+                        const res = await fetch('/api/v1/bookings', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          },
+                          body: JSON.stringify(bookingDraft)
+                        });
+                        if (!res.ok) throw new Error('Failed to create booking');
+                        alert('Booking Confirmed!');
+                      } catch (e) {
+                        alert('Error: ' + e.message);
+                      }
+                    }}>
+                      Confirm Booking
+                    </Button>
+                  </div>
+                )}
+              </div>
             ) : (
               <Card className="h-[600px] flex items-center justify-center">
                 <CardContent className="text-center">

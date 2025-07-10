@@ -7,26 +7,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useAuth } from '@/context/AuthContext';
 
 const RegisterVehicle = () => {
+  const { user } = useAuth();
+  if (!user || user.user_type !== "driver") {
+    return <div>Access denied</div>;
+  }
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    // Driver Info
     fullName: '',
     phoneNumber: '',
     email: '',
     licenseNumber: '',
     experience: '',
-    
-    // Vehicle Info
     vehicleType: '',
     vehicleMake: '',
     vehicleModel: '',
     year: '',
     plateNumber: '',
     capacity: '',
-    
-    // Service Info
     serviceAreas: '',
     specialization: '',
     pricePerKm: '',
@@ -38,30 +39,70 @@ const RegisterVehicle = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     // Basic validation
-    if (!formData.fullName || !formData.phoneNumber || !formData.vehicleType) {
+    if (!formData.vehicleType || !formData.vehicleMake || !formData.vehicleModel || !formData.year || !formData.plateNumber || !formData.capacity || !formData.pricePerKm) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required vehicle fields",
         variant: "destructive"
       });
       return;
     }
-
-    toast({
-      title: "Registration Successful!",
-      description: "Your vehicle has been registered. We'll review your application and contact you within 24 hours.",
-    });
-
-    // Reset form
-    setFormData({
-      fullName: '', phoneNumber: '', email: '', licenseNumber: '', experience: '',
-      vehicleType: '', vehicleMake: '', vehicleModel: '', year: '', plateNumber: '', capacity: '',
-      serviceAreas: '', specialization: '', pricePerKm: '', availability: '', additionalInfo: '',
-    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/v1/vehicles/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          vehicle_type: formData.vehicleType,
+          make: formData.vehicleMake,
+          model: formData.vehicleModel,
+          year: formData.year,
+          plate_number: formData.plateNumber,
+          capacity: formData.capacity,
+          rate_per_km: formData.pricePerKm,
+          specialization: formData.specialization,
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          email: formData.email,
+          license_number: formData.licenseNumber,
+          experience: formData.experience,
+          service_areas: formData.serviceAreas,
+          availability: formData.availability,
+          additional_info: formData.additionalInfo
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        toast({
+          title: "Registration Failed",
+          description: data.message || "Could not register vehicle",
+          variant: "destructive"
+        });
+        return;
+      }
+      toast({
+        title: "Registration Successful!",
+        description: "Your vehicle has been registered.",
+      });
+      // Reset form
+      setFormData({
+        fullName: '', phoneNumber: '', email: '', licenseNumber: '', experience: '',
+        vehicleType: '', vehicleMake: '', vehicleModel: '', year: '', plateNumber: '', capacity: '',
+        serviceAreas: '', specialization: '', pricePerKm: '', availability: '', additionalInfo: '',
+      });
+    } catch (error) {
+      toast({
+        title: "Registration Error",
+        description: (error as Error).message || "An error occurred during registration",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

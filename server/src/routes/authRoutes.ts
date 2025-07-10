@@ -7,8 +7,8 @@ import { authLimiter } from '../middleware/rateLimiter';
 const router = Router();
 
 // Public routes
-router.post('/register', authLimiter, validateUserRegistration, AuthController.register);
-router.post('/login', authLimiter, validateUserLogin, AuthController.login);
+router.post('/register', validateUserRegistration, AuthController.register);
+router.post('/login', validateUserLogin, AuthController.login);
 
 // Protected routes
 router.get('/profile', authenticateToken, AuthController.getProfile);

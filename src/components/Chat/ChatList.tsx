@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageCircle, Clock } from 'lucide-react';
+import { MessageCircle, Clock, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,13 +11,15 @@ interface ChatListProps {
   currentUserId: string;
   onRoomSelect: (room: ChatRoom) => void;
   selectedRoomId?: string;
+  onDeleteRoom?: (room: ChatRoom) => void;
 }
 
 export const ChatList: React.FC<ChatListProps> = ({
   rooms,
   currentUserId,
   onRoomSelect,
-  selectedRoomId
+  selectedRoomId,
+  onDeleteRoom
 }) => {
   const formatLastMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -106,6 +108,16 @@ export const ChatList: React.FC<ChatListProps> = ({
                           <Clock className="h-3 w-3 mr-1" />
                           {formatLastMessageTime(room.last_message.created_at)}
                         </span>
+                      )}
+                      {/* Delete button */}
+                      {onDeleteRoom && (
+                        <button
+                          className="ml-2 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+                          title="Delete chat"
+                          onClick={e => { e.stopPropagation(); onDeleteRoom(room); }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       )}
                     </div>
                     

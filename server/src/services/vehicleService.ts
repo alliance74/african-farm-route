@@ -11,6 +11,15 @@ export class VehicleService {
     capacity: number;
     specialization?: string;
     rate_per_km: number;
+    // New fields for future use
+    full_name?: string;
+    phone_number?: string;
+    email?: string;
+    license_number?: string;
+    experience?: string;
+    service_areas?: string;
+    availability?: string;
+    additional_info?: string;
   }): Promise<Vehicle> {
     // Check if driver already has a vehicle with this plate number
     const { data: existingVehicle } = await supabase

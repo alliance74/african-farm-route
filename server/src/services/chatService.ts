@@ -69,9 +69,13 @@ export class ChatService {
       throw new Error('Failed to fetch chat rooms: ' + error.message);
     }
 
+    if (!rooms || rooms.length === 0) {
+      return [];
+    }
+
     // Get last message and unread count for each room
     const roomsWithDetails = await Promise.all(
-      (rooms || []).map(async (room) => {
+      rooms.map(async (room) => {
         const [lastMessage, unreadCount] = await Promise.all([
           this.getLastMessage(room.id),
           this.getUnreadCount(room.id, userId)
@@ -239,6 +243,30 @@ export class ChatService {
 
     if (error) {
       throw new Error('Failed to close chat room: ' + error.message);
+    }
+  }
+
+  static async deleteChatRoom(roomId: string, userId: string): Promise<void> {
+    // Ensure user is a participant
+    const room = await this.getChatRoomById(roomId, userId);
+    if (!room) {
+      throw new Error('Chat room not found or access denied');
+    }
+    // Delete all messages in the room
+    const { error: msgError } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('room_id', roomId);
+    if (msgError) {
+      throw new Error('Failed to delete chat messages: ' + msgError.message);
+    }
+    // Delete the room itself
+    const { error: roomError } = await supabase
+      .from('chat_rooms')
+      .delete()
+      .eq('id', roomId);
+    if (roomError) {
+      throw new Error('Failed to delete chat room: ' + roomError.message);
     }
   }
 
