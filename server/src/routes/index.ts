@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes';
 import vehicleRoutes from './vehicleRoutes';
 import bookingRoutes from './bookingRoutes';
+import chatRoutes from './chatRoutes';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.get('/health', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/vehicles', vehicleRoutes);
 router.use('/bookings', bookingRoutes);
+router.use('/chat', chatRoutes);
 
 export default router;

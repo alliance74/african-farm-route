@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Truck, User, LogIn } from 'lucide-react';
+import { Menu, X, Truck, User, LogIn, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
@@ -12,6 +12,7 @@ const Navbar = () => {
     { name: 'Book Transport', href: '/book' },
     { name: 'Register Vehicle', href: '/register-vehicle' },
     { name: 'My Bookings', href: '/bookings' },
+    { name: 'Messages', href: '/chat' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -48,6 +49,12 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm">
                   <User className="h-4 w-4 mr-2" />
                   Admin
+                </Button>
+              </Link>
+              <Link to="/chat">
+                <Button variant="ghost" size="sm">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat
                 </Button>
               </Link>
               <Link to="/login">
@@ -94,6 +101,12 @@ const Navbar = () => {
                 <Button variant="ghost" className="w-full justify-start">
                   <User className="h-4 w-4 mr-2" />
                   Admin
+                </Button>
+              </Link>
+              <Link to="/chat" onClick={() => setIsOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Chat
                 </Button>
               </Link>
               <Link to="/login" onClick={() => setIsOpen(false)}>

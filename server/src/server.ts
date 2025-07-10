@@ -1,4 +1,6 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -6,9 +8,20 @@ import compression from 'compression';
 import { config } from './config/config';
 import { generalLimiter } from './middleware/rateLimiter';
 import routes from './routes';
+import { ChatSocketHandler } from './socket/chatSocket';
 
 const app = express();
+const server = createServer(app);
 
+// Setup Socket.IO
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' 
+      ? ['https://your-frontend-domain.com'] 
+      : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080'],
+    credentials: true
+  }
+});
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -29,6 +42,12 @@ app.use(generalLimiter);
 
 // API routes
 app.use('/api/v1', routes);
+
+// Initialize chat socket handler
+const chatHandler = new ChatSocketHandler(io);
+
+// Make chat handler available globally for notifications
+app.set('chatHandler', chatHandler);
 
 // Global error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -51,8 +70,9 @@ app.use('*', (req, res) => {
 
 const PORT = config.port;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 AgriMove API server running on port ${PORT}`);
+  console.log(`💬 Socket.IO chat server running`);
   console.log(`📱 Environment: ${config.nodeEnv}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/v1/health`);
 });
